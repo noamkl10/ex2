@@ -167,7 +167,8 @@ class MagicSquareGA:
             # Evaluate population
             fitness_values = []
             improved_population = []
-            
+            evaluated_individuals = []
+
             for individual in population:
                 original = copy.deepcopy(individual)
                 
@@ -175,17 +176,18 @@ class MagicSquareGA:
                     # Standard GA - no local optimization
                     fitness = self.calculate_fitness(individual)
                     improved_population.append(individual)
-                
+                    evaluated_individuals.append(individual)
                 elif mode == "darwin":
                     # Darwinian GA - apply optimization but don't modify genotype
                     optimized, fitness = self.optimize_individual(copy.deepcopy(individual))
                     improved_population.append(individual)  # Keep original
+                    evaluated_individuals.append(optimized)
                 
                 elif mode == "lamarck":
                     # Lamarckian GA - apply optimization and modify genotype
                     optimized, fitness = self.optimize_individual(copy.deepcopy(individual))
                     improved_population.append(optimized)  # Use optimized version
-                
+                    evaluated_individuals.append(optimized)
                 else:
                     raise ValueError(f"Unknown mode: {mode}")
                 
@@ -208,7 +210,7 @@ class MagicSquareGA:
             if generation_best_fitness < best_fitness:
                 best_fitness = generation_best_fitness
                 best_index = fitness_values.index(best_fitness)
-                best_solution = copy.deepcopy(population[best_index])
+                best_solution = copy.deepcopy(evaluated_individuals[best_index])
                 stagnation_counter = 0
             else:
                 stagnation_counter += 1
@@ -251,7 +253,7 @@ class MagicSquareGA:
         # Get final best solution if we didn't find a perfect one
         if best_fitness > 0 and best_solution is None:
             best_index = fitness_values.index(min(fitness_values))
-            best_solution = copy.deepcopy(population[best_index])
+            best_solution = copy.deepcopy(evaluated_individuals[best_index])
             best_fitness = fitness_values[best_index]
         
         duration = time.time() - start_time
@@ -324,7 +326,7 @@ def plot_fitness_histories(results, n, max_gens):
     # Plot 1: Best fitness history
     plt.figure(figsize=(12, 5))
     for i, alg in enumerate(algorithms):
-        plt.plot(results[alg]["fitness_history"], label=f"{alg.capitalize()} GA", color=colors[i])
+        plt.plot(results[alg]["best_fitness_history"], label=f"{alg.capitalize()} GA", color=colors[i])
     
     plt.xlabel('Generation')
     plt.ylabel('Best Fitness (lower is better)')
